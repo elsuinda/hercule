@@ -30,10 +30,11 @@ estación de trabajo Hercule: crea el usuario de trabajo e instala el tema de te
    herramienta usar y el procedimiento** para escenarios genéricos, plantilla de informe
    y cadena de custodia. Es la base para que el operador sepa usar la distro.
 6. **Ofrece instalar el toolkit** OSINT / forense / red (opcional; ver abajo).
-7. **Al final, pregunta** si querés **eliminar todos los otros usuarios** del sistema o
+7. **Ofrece instalar las apps propias** de Hercule (opcional; ver abajo).
+8. **Al final, pregunta** si querés **eliminar todos los otros usuarios** del sistema o
    conservarlos (por defecto: conservar). Si elegís eliminar, pide confirmación extra
    escribiendo la palabra `ELIMINAR`.
-8. **Avisa el resultado** e indica cómo cambiar la contraseña más adelante.
+9. **Avisa el resultado** e indica cómo cambiar la contraseña más adelante.
 
 ---
 
@@ -127,6 +128,28 @@ sudo ./instalar-herramientas.sh --dry-run    # simula, lista sin instalar
   subfinder y phoneinfoga quedan en `~/go/bin` del usuario `hercule`.
 - Deja el comando **`hercule-tools`**, que muestra el toolkit ordenado por fase.
 - Log en `/var/log/hercule-tools.log`.
+
+---
+
+## Aplicaciones propias (`instalar-apps.sh`)
+
+Clona desde GitHub las herramientas propias de Hercule y las instala en la estación,
+dejándolas como comando y como acceso directo (con icono) en el menú de aplicaciones.
+
+| App | Repo | Comando |
+|-----|------|---------|
+| **SEPTEM** (cifrador áureo) | `elsuinda/proyecto_aureo` | `septem start` / `septem stop` |
+| *la_rata* | *(próximamente)* | — |
+
+```bash
+sudo ./instalar-apps.sh              # instala todas las apps
+sudo ./instalar-apps.sh septem       # solo SEPTEM
+sudo ./instalar-apps.sh --dry-run    # simula
+```
+
+Cada app se clona en `/opt/hercule-apps/<app>` y se instala con su propio `install.sh`
+(entorno virtual aislado + comando global + `.desktop`). Para sumar una app nueva, se
+agrega una línea al arreglo `APPS` del script.
 
 ---
 

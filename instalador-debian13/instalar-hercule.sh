@@ -307,6 +307,27 @@ else
 fi
 
 # ---------------------------------------------------------------------
+# 3d. Aplicaciones propias de Hercule (SEPTEM, etc.) - opcional
+# ---------------------------------------------------------------------
+step "Aplicaciones propias"
+APPS_SRC="$SCRIPT_DIR/instalar-apps.sh"
+if [ -f "$APPS_SRC" ]; then
+  printf "  ${T}Instalar las apps propias de Hercule (SEPTEM, cifrador aureo)? [s] si    [n] no${R}\n"
+  read -rp "  > " RAPPS || RAPPS=""
+  if [[ "${RAPPS,,}" == "s" || "${RAPPS,,}" == "si" ]]; then
+    if [ "$DRY_RUN" -eq 1 ]; then
+      bash "$APPS_SRC" --dry-run || warn "el modulo de apps devolvio un error."
+    else
+      bash "$APPS_SRC" || warn "el modulo de apps devolvio un error."
+    fi
+  else
+    info "podes instalarlas luego con:  sudo $APPS_SRC"
+  fi
+else
+  warn "no se encontro $APPS_SRC; se omite. Corre el script desde la carpeta del proyecto."
+fi
+
+# ---------------------------------------------------------------------
 # 4. (al final) Preguntar si eliminar los otros usuarios
 # ---------------------------------------------------------------------
 step "Limpieza de usuarios"
