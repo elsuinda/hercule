@@ -1,0 +1,14 @@
+# Hercule - instalador Debian 13
+
+# logs de ejecucion
+*.log
+hercule-install.log
+
+# temporales
+*.tmp
+*.bak
+*~
+
+# sistema
+.DS_Store
+Thumbs.db

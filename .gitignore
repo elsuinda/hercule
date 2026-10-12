@@ -1,0 +1,26 @@
+# Hercule - proyecto
+
+# logs de ejecucion de los instaladores
+*.log
+hercule-install.log
+hercule-tools.log
+
+# temporales
+*.tmp
+*.bak
+*~
+__pycache__/
+*.pyc
+
+# empaquetados
+*.zip
+
+# sistema
+.DS_Store
+Thumbs.db
+
+# carpetas de trabajo del operador (no versionar casos reales)
+documentos-base/*/casos/
+documentos-base/forense/evidencia/
+documentos-base/informes/emitidos/
+!**/LEEME.txt

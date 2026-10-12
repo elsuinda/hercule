@@ -1,0 +1,34 @@
+! =====================================================================
+!  HERCULE — esquema de colores de terminal (xterm / urxvt)
+!  Instalar:  xrdb -merge hercule.Xresources
+!  Para GNOME Terminal / Tilix / Kitty / Alacritty ver README-terminal.md
+! =====================================================================
+
+*background:   #0A0E0A
+*foreground:   #C8D6C8
+*cursorColor:  #39FF14
+
+! negro / gris
+*color0:  #0A0E0A
+*color8:  #2A3A2A
+! rojo
+*color1:  #FF3B30
+*color9:  #FF6B60
+! verde (marca)
+*color2:  #39FF14
+*color10: #7CFF5C
+! amarillo / naranja (acento)
+*color3:  #FF6A00
+*color11: #FFA14D
+! azul
+*color4:  #2D9CDB
+*color12: #5FB8E8
+! magenta
+*color5:  #B86BFF
+*color13: #CF9BFF
+! cian
+*color6:  #1FA80B
+*color14: #39FF14
+! blanco
+*color7:  #C8D6C8
+*color15: #FFFFFF
