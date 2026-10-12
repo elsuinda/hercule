@@ -19,8 +19,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# carpetas de trabajo del operador (no versionar casos reales)
-documentos-base/*/casos/
-documentos-base/forense/evidencia/
-documentos-base/informes/emitidos/
-!**/LEEME.txt
+# carpetas de trabajo del operador: se versiona la estructura (el LEEME placeholder),
+# pero NUNCA el contenido real de casos/evidencia/informes emitidos.
+documentos-base/*/casos/*
+documentos-base/forense/evidencia/*
+documentos-base/informes/emitidos/*
+!documentos-base/*/casos/LEEME.txt
+!documentos-base/forense/evidencia/LEEME.txt
+!documentos-base/informes/emitidos/LEEME.txt

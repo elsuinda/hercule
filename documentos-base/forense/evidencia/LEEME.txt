@@ -1,0 +1,4 @@
+Guardá acá las copias de trabajo y los artefactos extraidos (NUNCA el original).
+Cada pieza con su hash SHA-256 anotado en ../../informes/CADENA-DE-CUSTODIA.md
+
+-- Hercule @v@

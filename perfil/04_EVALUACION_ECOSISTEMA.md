@@ -77,11 +77,13 @@ tu firma personal de software. Hercule le da:
 
 - [x] **Fase A — Perfil** (este directorio): identidad, manifiesto, metodología, bios.
 - [x] **Fase B — Identidad visual**: logo, iconos, arte para redes.
-- [ ] **Fase C — Herramienta**: tomar la herramienta que ya tenés en GitHub, mejorarla
-      y rebrandearla bajo Hercule (definir cuál en la próxima sesión).
-- [ ] **Fase D — Script de personalización Debian 13**: entorno de trabajo Hercule,
-      al estilo del script que ya hicimos en otro proyecto, pero todo con la estética y
-      el método Hercule (estación de investigación OSINT/forense lista para usar).
+- [x] **Fase C — Escritorio**: fondos de pantalla, iconos de sistema y modo undercover.
+- [x] **Fase D — Instalador de Debian 13**: estación de trabajo Hercule lista para usar
+      (usuario, modo oscuro + paleta, tema de terminal, toolkit OSINT/forense y
+      documentos base por temática).
+
+> Nota: la mejora de herramientas propias alojadas en GitHub se trabaja como un proyecto
+> aparte, fuera del alcance de Hercule.
 
 ---
 

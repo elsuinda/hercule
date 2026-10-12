@@ -118,11 +118,15 @@ else
   run useradd -m -s /bin/bash -c "$HERCULE_NAME" "$HERCULE_USER"
   if [ "$DRY_RUN" -eq 0 ]; then
     echo "${HERCULE_USER}:${HERCULE_PASS}" | chpasswd
+    # Seguridad: la contrasena por defecto es debil y conocida; forzar el cambio
+    # obligatorio en el primer inicio de sesion.
+    chage -d 0 "$HERCULE_USER" 2>/dev/null || true
   else
-    printf "  ${O}[dry]${R} ${T}set password por defecto para %s${R}\n" "$HERCULE_USER"
+    printf "  ${O}[dry]${R} ${T}set password por defecto + forzar cambio en 1er login (chage -d 0)${R}\n"
   fi
   run usermod -aG sudo "$HERCULE_USER"
   ok "usuario $HERCULE_USER creado (nombre: $HERCULE_NAME) y agregado al grupo sudo."
+  warn "la contrasena por defecto es debil; el sistema pedira cambiarla en el 1er login."
 fi
 
 HERCULE_HOME="$(getent passwd "$HERCULE_USER" 2>/dev/null | cut -d: -f6 || true)"

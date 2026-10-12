@@ -1,0 +1,5 @@
+Creá acá una carpeta por caso, con fecha. Ejemplo:
+  2026-10-11_nombre-del-caso/
+Adentro poné tus notas, capturas y el informe.md (copialo de ../../informes/PLANTILLA-INFORME.md).
+
+-- Hercule @v@

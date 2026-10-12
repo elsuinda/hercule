@@ -3,8 +3,18 @@
 > Identidad operativa para **investigación, ciberinteligencia y hacking ético**.
 > Inspirada en el método de Hercule Poirot: *les petites cellules grises*.
 
-Este directorio reúne todo sobre Hercule: el perfil, la identidad visual y, en fases
-siguientes, la herramienta y el entorno Debian 13.
+Este directorio reúne todo sobre Hercule: el perfil, la identidad visual, el tema de
+terminal, el escritorio, los documentos base y el instalador de Debian 13.
+
+---
+
+## ⚠️ Uso responsable
+
+Hercule es para **investigación OSINT, ciberinteligencia y hacking ético**. Usá sus
+herramientas y guías **solo** sobre objetivos para los que tengas **autorización expresa**
+y dentro del marco legal. El instalador de Debian 13 realiza acciones administrativas
+(crea un usuario con contraseña por defecto, puede eliminar usuarios): **probalo siempre
+con `--dry-run` primero**. Ver `SECURITY.md` para el detalle.
 
 ---
 
@@ -38,12 +48,12 @@ hercule/
 │   ├── 00-EMPEZAR-ACA.md
 │   ├── osint/ · pentest/ · forense/ · red/ · informes/ · recursos/
 │   └── (cada temática: GUIA + carpeta casos/)
-├── instalador-debian13/          ← Fase D: instalador para Debian 13
-│   ├── instalar-hercule.sh       ← crea usuario + instala tema (root, --dry-run)
-│   ├── README.md
-│   └── .gitignore
-└── herramienta/
-    └── NOTAS.md                   ← preparación de la Fase C (GitHub)
+└── instalador-debian13/          ← Fase D: instalador para Debian 13
+    ├── instalar-hercule.sh       ← crea usuario + instala tema (root, --dry-run)
+    ├── instalar-herramientas.sh  ← toolkit OSINT/forense/red por fase
+    ├── aplicar-terminal-gnome.sh ← paleta de GNOME Terminal (1er login)
+    ├── README.md
+    └── .gitignore
 ```
 
 ---
@@ -55,8 +65,8 @@ hercule/
 | A | Perfil completo | ✅ Listo |
 | B | Identidad visual (silueta, logo, iconos, redes) | ✅ Listo |
 | B+ | Tema de terminal (banner, prompt, colores) | ✅ Listo |
-| C | Mejora de herramienta de GitHub | ⏳ Próxima sesión |
-| D | Script de personalización Debian 13 | 🛠️ En progreso (instalador + usuario Hercule listos) |
+| C | Escritorio (fondos, iconos, undercover) | ✅ Listo |
+| D | Instalador de Debian 13 (usuario, modo oscuro/paleta, herramientas, documentos base) | ✅ Listo |
 
 ---
 
