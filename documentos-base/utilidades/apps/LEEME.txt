@@ -1,0 +1,3 @@
+Acá aparecen las fichas de uso de las herramientas de utilidad que instalaste con Hercule.
+
+-- Hercule @v@

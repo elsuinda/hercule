@@ -98,6 +98,58 @@ instalar_app() {
   else
     warn "no se encontro $script en $nombre; se omite la instalacion."
   fi
+
+  # documentacion de uso por categoria: copiar la ficha de la app a
+  # Documents/Hercule/<categoria>/apps/<app>.md del usuario de trabajo
+  documentar_app "$dest"
+}
+
+# usuario de trabajo cuyos Documents reciben las fichas (por defecto 'hercule')
+USUARIO_DOCS="${USUARIO_DOCS:-hercule}"
+
+_documents_dir() {
+  local u="$1" home docs
+  home="$(getent passwd "$u" 2>/dev/null | cut -d: -f6)"
+  [ -z "$home" ] && return 1
+  docs="$(sudo -u "$u" bash -lc 'xdg-user-dir DOCUMENTS 2>/dev/null' 2>/dev/null || true)"
+  if [ -z "$docs" ] || [ "$docs" = "$home" ]; then
+    docs=""
+    for d in "$home/Documents" "$home/Documentos"; do [ -d "$d" ] && docs="$d" && break; done
+  fi
+  [ -z "$docs" ] && docs="$home/Documents"
+  echo "$docs"
+}
+
+documentar_app() {
+  local dest="$1"
+  local conf="$dest/hercule-app.conf"
+  [ -f "$conf" ] || return 0
+  # leer metadatos de forma segura (solo CLAVE=valor conocidas)
+  local CATEGORIA NOMBRE FICHA
+  CATEGORIA="$(grep -E '^CATEGORIA=' "$conf" | head -1 | cut -d= -f2-)"
+  NOMBRE="$(grep -E '^NOMBRE=' "$conf" | head -1 | cut -d= -f2-)"
+  FICHA="$(grep -E '^FICHA=' "$conf" | head -1 | cut -d= -f2-)"
+  [ -z "$CATEGORIA" ] && CATEGORIA="utilidades"
+  [ -z "$FICHA" ] && FICHA="USO-HERCULE.md"
+  if [ ! -f "$dest/$FICHA" ]; then
+    warn "la app no trae ficha de uso ($FICHA); se omite la documentacion."
+    return 0
+  fi
+  if ! id "$USUARIO_DOCS" &>/dev/null; then
+    info "usuario $USUARIO_DOCS inexistente; la ficha de uso no se copia (instala Hercule primero)."
+    return 0
+  fi
+  local docs destdir
+  docs="$(_documents_dir "$USUARIO_DOCS")" || return 0
+  destdir="$docs/Hercule/$CATEGORIA/apps"
+  if [ "$DRY_RUN" -eq 1 ]; then
+    info "[dry] copiar ficha de uso -> $destdir/$(basename "$dest").md"
+    return 0
+  fi
+  mkdir -p "$destdir"
+  cp -f "$dest/$FICHA" "$destdir/$(basename "$dest").md"
+  chown -R "$USUARIO_DOCS:$USUARIO_DOCS" "$docs/Hercule" 2>/dev/null || true
+  ok "documentacion de uso agregada en categoria '$CATEGORIA' ($destdir)."
 }
 
 for entry in "${APPS[@]}"; do

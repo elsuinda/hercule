@@ -20,8 +20,14 @@ Dentro de `Documents/Hercule/` tenés una carpeta por temática. En cada una hay
 | `red/` | Análisis de red y respuesta a incidentes |
 | `informes/` | Plantilla de informe y cadena de custodia; acá guardás lo que entregás |
 | `recursos/` | Metodología "células grises" y hoja de comandos rápida |
+| `utilidades/` | Herramientas de apoyo (cifrado, etc.) instaladas con Hercule |
 
 En cada temática, `casos/` es donde creás **una carpeta por cada caso** que trabajás.
+
+> **Fichas de herramientas:** cuando instalás las apps propias de Hercule (SEPTEM, LA
+> RATA, …), cada una deja su **ficha de uso** en la subcarpeta `apps/` de su categoría —
+> por ejemplo `osint/apps/larata.md` o `utilidades/apps/septem.md`. Ahí tenés cómo se
+> abre/cierra cada herramienta y cómo encaja en el método.
 
 ---
 
