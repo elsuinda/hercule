@@ -139,7 +139,7 @@ dejándolas como comando y como acceso directo (con icono) en el menú de aplica
 | App | Repo | Comando |
 |-----|------|---------|
 | **SEPTEM** (cifrador áureo) | `elsuinda/proyecto_aureo` | `septem start` / `septem stop` |
-| *la_rata* | *(próximamente)* | — |
+| **LA RATA** (OSINT noticias+perfiles) | `elsuinda/la_rata` | `larata start` / `larata stop` |
 
 ```bash
 sudo ./instalar-apps.sh              # instala todas las apps

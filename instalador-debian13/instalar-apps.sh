@@ -24,7 +24,7 @@ DRY_RUN=0
 # Catalogo de apps:  nombre|repo_git|script_instalacion
 APPS=(
   "septem|https://github.com/elsuinda/proyecto_aureo|install.sh"
-  # "larata|https://github.com/elsuinda/la_rata|install.sh"   # proximamente
+  "larata|https://github.com/elsuinda/la_rata|install.sh"
 )
 
 # ---------- colores ----------
