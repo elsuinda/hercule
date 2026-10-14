@@ -6,8 +6,9 @@
 #  acceso directo en el menu de aplicaciones.
 #
 #  Apps incluidas:
-#    - SEPTEM  (proyecto_aureo)  -> comando: septem start | stop
-#    - [la_rata, mas adelante]
+#    - SEPTEM    (proyecto_aureo)            -> comando: septem start | stop
+#    - LA RATA   (la_rata)                   -> comando: larata start | stop
+#    - BLACKCAT  (blackcat-osint-reporter)   -> comando: blackcat start | stop
 #
 #  Uso:
 #    sudo ./instalar-apps.sh              instala todas las apps
@@ -25,6 +26,7 @@ DRY_RUN=0
 APPS=(
   "septem|https://github.com/elsuinda/proyecto_aureo|install.sh"
   "larata|https://github.com/elsuinda/la_rata|install.sh"
+  "blackcat|https://github.com/elsuinda/blackcat-osint-reporter|install.sh"
 )
 
 # ---------- colores ----------
