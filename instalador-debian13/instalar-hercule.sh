@@ -31,7 +31,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 THEME_SRC="$SCRIPT_DIR/../terminal"     # tema de terminal del proyecto
 ESC_SRC="$SCRIPT_DIR/../escritorio"     # fondos / escritorio del proyecto
 APLICADOR="$SCRIPT_DIR/aplicar-terminal-gnome.sh"  # aplicador de paleta (GNOME Terminal)
+PROYECTO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"       # raiz del repo local
+REPO_SIS="/opt/hercule"                 # copia del repo en el sistema (para actualizar)
+REMOTO_DEFECTO="https://github.com/elsuinda/hercule"
 DRY_RUN=0
+MODO_UPDATE=0                           # 1 = re-aplicar personalizacion (hercule-update)
 
 # ---------------------------------------------------------------------
 # Colores (estetica Hercule - mensajes sin tildes)
@@ -70,6 +74,7 @@ Instalador de personalizacion Hercule para Debian 13.
 
   sudo ./instalar-hercule.sh            instalacion normal
   sudo ./instalar-hercule.sh --dry-run  simula sin aplicar cambios
+  sudo ./instalar-hercule.sh --update   re-aplica personalizacion (lo usa hercule-update)
   ./instalar-hercule.sh --help          esta ayuda
 
 Debe ejecutarse como root (o con sudo).
@@ -82,6 +87,7 @@ EOF
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=1 ;;
+    --update) MODO_UPDATE=1 ;;
     --help|-h) ayuda; exit 0 ;;
     *) err "argumento desconocido: $arg"; ayuda; exit 2 ;;
   esac
@@ -104,6 +110,7 @@ fi
 
 banner
 [ "$DRY_RUN" -eq 1 ] && warn "modo simulacion (--dry-run): no se aplican cambios reales."
+[ "$MODO_UPDATE" -eq 1 ] && info "modo actualizacion: re-aplica personalizacion y guias; no toca usuarios ni casos."
 info "inicio: $(date '+%Y-%m-%d %H:%M:%S')"
 
 # ---------------------------------------------------------------------
@@ -274,9 +281,16 @@ if [ -d "$DOCS_SRC" ]; then
   DEST_DOCS="$DOCS/Hercule"
   if [ "$DRY_RUN" -eq 0 ]; then
     mkdir -p "$DEST_DOCS"
-    cp -rn "$DOCS_SRC/." "$DEST_DOCS/" 2>/dev/null || true   # -n: no pisa lo que el usuario edito
+    if [ "$MODO_UPDATE" -eq 1 ]; then
+      # update: actualiza las guias/plantillas del proyecto, PERO nunca toca los
+      # 'casos/' del usuario (cp no borra; el repo no trae casos con datos).
+      cp -r "$DOCS_SRC/." "$DEST_DOCS/" 2>/dev/null || true
+      ok "guias actualizadas en $DEST_DOCS (tus casos quedaron intactos)."
+    else
+      cp -rn "$DOCS_SRC/." "$DEST_DOCS/" 2>/dev/null || true  # -n: no pisa lo que el usuario edito
+      ok "guias y arbol de trabajo creados en $DEST_DOCS"
+    fi
     chown -R "$HERCULE_USER:$HERCULE_USER" "$DOCS" 2>/dev/null || true
-    ok "guias y arbol de trabajo creados en $DEST_DOCS"
   else
     info "[dry] copiar documentos-base -> $DEST_DOCS"
   fi
@@ -287,7 +301,9 @@ fi
 
 # ---------------------------------------------------------------------
 # 3c. Herramientas de investigacion (OSINT / forense / red) - opcional
+#     (en modo --update no se pregunta; el toolkit se actualiza aparte)
 # ---------------------------------------------------------------------
+if [ "$MODO_UPDATE" -eq 0 ]; then
 step "Herramientas de investigacion"
 TOOLS_SRC="$SCRIPT_DIR/instalar-herramientas.sh"
 if [ -f "$TOOLS_SRC" ]; then
@@ -326,10 +342,65 @@ if [ -f "$APPS_SRC" ]; then
 else
   warn "no se encontro $APPS_SRC; se omite. Corre el script desde la carpeta del proyecto."
 fi
+fi  # fin bloque tools/apps (solo instalacion normal)
+
+# ---------------------------------------------------------------------
+# 3e. Sistema de actualizacion: copia del repo en /opt/hercule + comando
+#     'hercule-update' (solo en instalacion normal).
+# ---------------------------------------------------------------------
+if [ "$MODO_UPDATE" -eq 0 ]; then
+step "Sistema de actualizacion (hercule-update)"
+if [ "$DRY_RUN" -eq 1 ]; then
+  info "[dry] instalar copia del repo en $REPO_SIS (git clone/copia) + comando hercule-update"
+else
+  command -v git >/dev/null 2>&1 || apt-get install -y -q git >/dev/null 2>&1 || true
+  if [ -d "$REPO_SIS/.git" ]; then
+    info "ya existe una copia del proyecto en $REPO_SIS; se conserva."
+  elif [ "$PROYECTO_DIR" = "$REPO_SIS" ]; then
+    info "el proyecto ya esta en $REPO_SIS."
+  elif [ -d "$PROYECTO_DIR/.git" ]; then
+    info "copiando el proyecto (con su historial git) a $REPO_SIS..."
+    mkdir -p "$REPO_SIS"
+    cp -a "$PROYECTO_DIR/." "$REPO_SIS/" 2>/dev/null || true
+    ok "copia del proyecto lista en $REPO_SIS."
+  elif command -v git >/dev/null 2>&1; then
+    info "clonando el proyecto desde $REMOTO_DEFECTO a $REPO_SIS..."
+    if git clone --quiet "$REMOTO_DEFECTO" "$REPO_SIS" 2>/dev/null; then
+      ok "proyecto clonado en $REPO_SIS."
+    else
+      warn "no se pudo clonar el repo (sin internet?); la autoactualizacion quedara deshabilitada."
+    fi
+  else
+    warn "git no disponible; no se pudo preparar la autoactualizacion."
+  fi
+  # marcar el repo como seguro para git corriendo como root
+  git config --global --add safe.directory "$REPO_SIS" 2>/dev/null || true
+  # instalar el comando hercule-update (wrapper que usa siempre la version actual)
+  if [ -f "$REPO_SIS/instalador-debian13/actualizar-hercule.sh" ]; then
+    cat > /usr/local/bin/hercule-update <<EOF
+#!/usr/bin/env bash
+# Actualiza Hercule desde el repositorio y re-aplica los cambios.
+exec bash "$REPO_SIS/instalador-debian13/actualizar-hercule.sh" "\$@"
+EOF
+    chmod 0755 /usr/local/bin/hercule-update
+    # registrar la version instalada
+    COMMIT_INI="$(git -C "$REPO_SIS" rev-parse HEAD 2>/dev/null || echo desconocido)"
+    printf "commit=%s\nfecha=%s\n" "$COMMIT_INI" "$(date '+%Y-%m-%d %H:%M:%S')" \
+      > "$REPO_SIS/.hercule-version" 2>/dev/null || true
+    ok "comando 'hercule-update' instalado."
+    info "para actualizar Hercule en el futuro:  sudo hercule-update"
+    info "para solo ver si hay novedades:        sudo hercule-update --check"
+  else
+    warn "no se encontro el actualizador en $REPO_SIS; 'hercule-update' no se instalo."
+  fi
+fi
+fi  # fin sistema de actualizacion
 
 # ---------------------------------------------------------------------
 # 4. (al final) Preguntar si eliminar los otros usuarios
+#    (en modo --update NO se toca a los usuarios)
 # ---------------------------------------------------------------------
+if [ "$MODO_UPDATE" -eq 0 ]; then
 step "Limpieza de usuarios"
 mapfile -t OTROS < <(awk -F: -v keep="$HERCULE_USER" \
   '$3>=1000 && $3<60000 && $1!=keep && $1!="nobody" {print $1}' /etc/passwd)
@@ -371,20 +442,30 @@ else
     info "se conservan todos los usuarios existentes."
   fi
 fi
+fi  # fin limpieza de usuarios (solo instalacion normal)
 
 # ---------------------------------------------------------------------
 # 5. Mensaje final
 # ---------------------------------------------------------------------
 step "Final"
-printf "\n  ${G}============================================${R}\n"
-ok "el script finalizo con exito."
-ok "se creo el usuario Hercule (login: $HERCULE_USER)."
-printf "\n"
-info "por seguridad, deberas cambiar su contrasena mas adelante."
-info "para cambiarla, usa el comando:"
-printf "       ${G}passwd $HERCULE_USER${R}   ${T}(ejecutado como root)${R}\n"
-printf "       ${G}passwd${R}           ${T}(dentro de la sesion de $HERCULE_USER)${R}\n"
-printf "  ${G}============================================${R}\n\n"
+if [ "$MODO_UPDATE" -eq 1 ]; then
+  printf "\n  ${G}============================================${R}\n"
+  ok "re-aplicacion de la personalizacion finalizada."
+  info "los cambios de terminal/escritorio se veran al reabrir la sesion de $HERCULE_USER."
+  printf "  ${G}============================================${R}\n\n"
+else
+  printf "\n  ${G}============================================${R}\n"
+  ok "el script finalizo con exito."
+  ok "se creo el usuario Hercule (login: $HERCULE_USER)."
+  printf "\n"
+  info "por seguridad, deberas cambiar su contrasena mas adelante."
+  info "para cambiarla, usa el comando:"
+  printf "       ${G}passwd $HERCULE_USER${R}   ${T}(ejecutado como root)${R}\n"
+  printf "       ${G}passwd${R}           ${T}(dentro de la sesion de $HERCULE_USER)${R}\n"
+  printf "\n"
+  info "para actualizar Hercule cuando haya cambios:  ${G}sudo hercule-update${R}"
+  printf "  ${G}============================================${R}\n\n"
+fi
 
 if [ "$DRY_RUN" -eq 0 ]; then
   info "resultado guardado en $LOGFILE"

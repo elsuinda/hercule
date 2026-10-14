@@ -57,6 +57,9 @@ Todo caso sigue el mismo camino. Está explicado en
 - `hercule-tools` — muestra todas las herramientas instaladas, ordenadas por fase.
 - `hhelp` — ayuda rápida de los alias de Hercule.
 - `normal` / `undercover` — cambia el fondo de pantalla (branded / discreto).
+- `sudo hercule-update` — actualiza Hercule con los últimos cambios del proyecto
+  (`--check` solo avisa si hay novedades; `--tools` también actualiza el toolkit).
+  Re-aplica tema, guías y apps **sin tocar tus casos**.
 
 ---
 

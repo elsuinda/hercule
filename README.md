@@ -49,12 +49,32 @@ hercule/
 │   ├── osint/ · pentest/ · forense/ · red/ · informes/ · recursos/
 │   └── (cada temática: GUIA + carpeta casos/)
 └── instalador-debian13/          ← Fase D: instalador para Debian 13
-    ├── instalar-hercule.sh       ← crea usuario + instala tema (root, --dry-run)
+    ├── instalar-hercule.sh       ← crea usuario + tema + modo oscuro + autoactualizacion (root, --dry-run)
     ├── instalar-herramientas.sh  ← toolkit OSINT/forense/red por fase
+    ├── instalar-apps.sh          ← apps propias (SEPTEM, LA RATA, BLACKCAT)
+    ├── actualizar-hercule.sh     ← logica del comando 'hercule-update'
     ├── aplicar-terminal-gnome.sh ← paleta de GNOME Terminal (1er login)
     ├── README.md
     └── .gitignore
 ```
+
+---
+
+## Actualización
+
+Al instalarse, Hercule deja una copia del proyecto en `/opt/hercule` y el comando
+**`hercule-update`**. Cuando el repositorio reciba cambios (nuevas funciones, apps o
+correcciones), se actualiza el sistema ya instalado con:
+
+```bash
+sudo hercule-update            # trae cambios y re-aplica (personalizacion + apps)
+sudo hercule-update --check    # solo informa si hay novedades, no aplica
+sudo hercule-update --tools    # ademas actualiza el toolkit OSINT/forense
+sudo hercule-update --dry-run  # simula, sin cambiar nada
+```
+
+Trae los cambios con `git pull`, re-aplica tema, guías y apps, y **nunca toca tus
+casos ni informes** en `Documents/Hercule/`.
 
 ---
 
