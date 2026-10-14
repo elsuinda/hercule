@@ -54,8 +54,10 @@ PIPX_OSINT=(sherlock-project holehe maigret socialscan)
 # OSINT avanzado via pipx
 PIPX_EXTRA=(dnstwist spiderfoot)
 # OSINT avanzado via 'go install' (nombre|modulo)
+# Importante: se apunta al paquete main concreto (cmd/...), no al comodin /...,
+# para que 'go install' no intente compilar paquetes que no son ejecutables.
 GO_TOOLS=(
-  "amass|github.com/owasp-amass/amass/v4/...@master"
+  "amass|github.com/owasp-amass/amass/v4/cmd/amass@master"
   "subfinder|github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest"
   "phoneinfoga|github.com/sundowndev/phoneinfoga/v2@latest"
 )
@@ -217,26 +219,50 @@ if [ "$SEL_EXTRA" -eq 1 ]; then
       info "[dry] pipx install (como $USUARIO_HERCULE): ${PIPX_EXTRA[*]}"
     fi
     # --- go tools (amass, subfinder, phoneinfoga) ---
+    # Si falta go (p.ej. no se eligio --base), se intenta instalar golang-go.
+    if ! command -v go >/dev/null 2>&1 && [ "$DRY_RUN" -eq 0 ]; then
+      info "go no estaba instalado; instalando golang-go..."
+      apt-get install -y --no-install-recommends golang-go >/dev/null 2>&1 || true
+    fi
     if command -v go >/dev/null 2>&1; then
-      # asegurar ~/go/bin en el PATH del usuario
+      HHOME="$(getent passwd "$USUARIO_HERCULE" | cut -d: -f6)"
+      GOLOG="${LOGFILE%/*}/hercule-go.log"
+      GOVER="$(go version 2>/dev/null | awk '{print $3}')"
+      info "usando $GOVER (toolchain=auto: descarga la version que pida cada herramienta)."
       if [ "$DRY_RUN" -eq 0 ]; then
-        BRC="$(getent passwd "$USUARIO_HERCULE" | cut -d: -f6)/.bashrc"
+        # ~/go/bin en el PATH del usuario
+        BRC="$HHOME/.bashrc"
         LINEP='export PATH="$HOME/go/bin:$PATH"'
         grep -qF "$LINEP" "$BRC" 2>/dev/null || printf "%s\n" "$LINEP" >> "$BRC"
-        chown "$USUARIO_HERCULE:$USUARIO_HERCULE" "$BRC" 2>/dev/null || true
+        # crear dirs de go con ownership correcto (evita fallos de cache/escritura)
+        mkdir -p "$HHOME/go/bin" "$HHOME/.cache/go-build"
+        chown -R "$USUARIO_HERCULE:$USUARIO_HERCULE" "$HHOME/go" "$HHOME/.cache/go-build" "$BRC" 2>/dev/null || true
+        : > "$GOLOG" 2>/dev/null || true
       fi
+      # Entorno robusto para 'go install' como usuario hercule:
+      #  - GOTOOLCHAIN=auto : Debian fija 'local' y hace fallar modulos que piden
+      #    otra version de Go; 'auto' deja que go descargue la toolchain correcta.
+      #  - GOPROXY/GOSUMDB  : por si el entorno del usuario tiene uno roto.
+      #  - GOBIN/GOPATH     : binarios en ~/go/bin.
+      GOENV='export GOTOOLCHAIN=auto GOFLAGS=-mod=mod \
+             GOPROXY=https://proxy.golang.org,direct GOSUMDB=sum.golang.org \
+             GOPATH="$HOME/go" GOBIN="$HOME/go/bin" GOCACHE="$HOME/.cache/go-build";'
       for entry in "${GO_TOOLS[@]}"; do
         nombre="${entry%%|*}"; modulo="${entry#*|}"
         if [ "$DRY_RUN" -eq 1 ]; then
-          info "[dry] go install $modulo  (-> $nombre, como $USUARIO_HERCULE)"
+          info "[dry] go install $modulo  (-> $nombre, como $USUARIO_HERCULE, GOTOOLCHAIN=auto)"
         else
-          if sudo -u "$USUARIO_HERCULE" bash -lc "go install -v '$modulo'" >/dev/null 2>&1; then
+          if sudo -u "$USUARIO_HERCULE" bash -lc "$GOENV go install -v '$modulo'" >>"$GOLOG" 2>&1; then
             ok "go: $nombre instalado (en ~/go/bin)."
-          else warn "go: no se pudo instalar $nombre (se omite)."; fi
+          else
+            warn "go: no se pudo instalar $nombre. Ultimo error:"
+            tail -n 3 "$GOLOG" 2>/dev/null | sed 's/^/      /'
+            info "detalle completo en $GOLOG"
+          fi
         fi
       done
     else
-      warn "go no esta instalado; instala primero el grupo base (--base) para amass/subfinder/phoneinfoga."
+      warn "go no esta instalado y no se pudo instalar; se omiten amass/subfinder/phoneinfoga."
     fi
     # --- recon-ng via git (+ venv aislado) ---
     if command -v git >/dev/null 2>&1; then
