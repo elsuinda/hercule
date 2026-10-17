@@ -374,6 +374,13 @@ else
     warn "git no disponible; no se pudo preparar la autoactualizacion."
   fi
   git config --global --add safe.directory "$REPO_SIS" 2>/dev/null || true
+  # SEGURIDAD: la copia corre como root en cada actualizacion, asi que debe
+  # pertenecer a root y NO ser escribible por el usuario de trabajo (evita
+  # que alguien con la cuenta 'hercule' inyecte codigo que se ejecuta como root).
+  if [ -d "$REPO_SIS" ]; then
+    chown -R root:root "$REPO_SIS" 2>/dev/null || true
+    chmod -R go-w "$REPO_SIS" 2>/dev/null || true
+  fi
 
   INST_SIS="$REPO_SIS/instalador-debian13"
   # --- comando hercule-update (wrapper que usa siempre la version actual) ---
@@ -401,10 +408,14 @@ EOF
     if [ ! -f /etc/hercule/autoupdate.conf ]; then
       cat > /etc/hercule/autoupdate.conf <<'EOF'
 # Hercule - autoactualizacion al actualizar el SO (apt update)
-# AUTO_APPLY=1  aplica los cambios de Hercule automaticamente (por defecto)
-# AUTO_APPLY=0  solo avisa; aplicas con 'sudo hercule-update'
-AUTO_APPLY=1
+#   MODO=auto    aplica los cambios de Hercule en segundo plano (por defecto)
+#   MODO=check   solo avisa en la salida de apt; aplicas con 'sudo hercule-update'
+#   MODO=off     no revisa ni aplica nada
+# Nota de seguridad: 'auto' ejecuta codigo del repositorio como root sin
+# supervision. En equipos sensibles conviene 'check' u 'off'.
+MODO=auto
 EOF
+      chmod 0644 /etc/hercule/autoupdate.conf 2>/dev/null || true
     fi
     # hook de apt: corre tras 'apt update' exitoso; ademas fija un timeout de
     # lock para que la actualizacion en segundo plano espere en vez de fallar.
@@ -414,7 +425,7 @@ APT::Update::Post-Invoke-Success { "/usr/local/bin/hercule-autoupdate apt-hook 2
 DPkg::Lock::Timeout "300";
 EOF
     ok "autoactualizacion con apt activada (se revisa al hacer 'apt update')."
-    info "para desactivar solo el auto-aplicar: /etc/hercule/autoupdate.conf (AUTO_APPLY=0)."
+    info "modo en /etc/hercule/autoupdate.conf:  auto (aplica) | check (avisa) | off."
   else
     warn "no se encontro hercule-autoupdate.sh; el enganche con apt no se instalo."
   fi

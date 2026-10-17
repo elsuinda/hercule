@@ -84,10 +84,15 @@ sistema (`sudo apt update`), Hercule revisa su repositorio y, si hay cambios, la
 la actualización en segundo plano (desacoplada del gestor de paquetes, sin frenar
 `apt`). Así la actualización de Hercule acompaña a la del sistema operativo.
 
-- Se controla desde `/etc/hercule/autoupdate.conf`:
-  `AUTO_APPLY=1` aplica los cambios solo (por defecto); `AUTO_APPLY=0` solo avisa y
-  los aplicás con `sudo hercule-update`.
-- Para desactivarlo del todo: borrá `/etc/apt/apt.conf.d/99hercule-update`.
+- Se controla desde `/etc/hercule/autoupdate.conf` (variable `MODO`):
+  `auto` aplica los cambios solo (por defecto), `check` solo avisa y los aplicás
+  con `sudo hercule-update`, `off` no revisa nada.
+- Para desactivarlo del todo también podés borrar `/etc/apt/apt.conf.d/99hercule-update`.
+
+> **Seguridad:** el modo `auto` ejecuta código del repositorio como root sin
+> supervisión (modelo de confianza de "actualización automática"). En equipos
+> sensibles conviene `check` u `off` y aplicar a mano tras revisar los cambios.
+> La copia en `/opt/hercule` queda como `root` y no escribible por el usuario.
 
 ---
 
