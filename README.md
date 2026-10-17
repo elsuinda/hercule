@@ -53,6 +53,7 @@ hercule/
     ├── instalar-herramientas.sh  ← toolkit OSINT/forense/red por fase
     ├── instalar-apps.sh          ← apps propias (SEPTEM, LA RATA, BLACKCAT)
     ├── actualizar-hercule.sh     ← logica del comando 'hercule-update'
+    ├── hercule-autoupdate.sh     ← enganche con apt (autoactualizacion al actualizar el SO)
     ├── aplicar-terminal-gnome.sh ← paleta de GNOME Terminal (1er login)
     ├── README.md
     └── .gitignore
@@ -75,6 +76,18 @@ sudo hercule-update --dry-run  # simula, sin cambiar nada
 
 Trae los cambios con `git pull`, re-aplica tema, guías y apps, y **nunca toca tus
 casos ni informes** en `Documents/Hercule/`.
+
+### Automática al actualizar el SO
+
+El instalador deja además un **enganche con APT**: cada vez que actualizás el
+sistema (`sudo apt update`), Hercule revisa su repositorio y, si hay cambios, lanza
+la actualización en segundo plano (desacoplada del gestor de paquetes, sin frenar
+`apt`). Así la actualización de Hercule acompaña a la del sistema operativo.
+
+- Se controla desde `/etc/hercule/autoupdate.conf`:
+  `AUTO_APPLY=1` aplica los cambios solo (por defecto); `AUTO_APPLY=0` solo avisa y
+  los aplicás con `sudo hercule-update`.
+- Para desactivarlo del todo: borrá `/etc/apt/apt.conf.d/99hercule-update`.
 
 ---
 

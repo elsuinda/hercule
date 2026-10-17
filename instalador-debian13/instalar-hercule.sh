@@ -345,17 +345,19 @@ fi
 fi  # fin bloque tools/apps (solo instalacion normal)
 
 # ---------------------------------------------------------------------
-# 3e. Sistema de actualizacion: copia del repo en /opt/hercule + comando
-#     'hercule-update' (solo en instalacion normal).
+# 3e. Sistema de actualizacion: copia del repo en /opt/hercule, comando
+#     'hercule-update' y enganche automatico con APT (al actualizar el SO).
+#     Se (re)instala tanto en instalacion normal como en --update, para
+#     que las mejoras del propio mecanismo tambien se propaguen.
 # ---------------------------------------------------------------------
-if [ "$MODO_UPDATE" -eq 0 ]; then
-step "Sistema de actualizacion (hercule-update)"
+step "Sistema de actualizacion (hercule-update + apt)"
 if [ "$DRY_RUN" -eq 1 ]; then
-  info "[dry] instalar copia del repo en $REPO_SIS (git clone/copia) + comando hercule-update"
+  info "[dry] copia del repo en $REPO_SIS + comando hercule-update + hook de apt (autoactualizacion)"
 else
   command -v git >/dev/null 2>&1 || apt-get install -y -q git >/dev/null 2>&1 || true
+  # --- copia del repo en el sistema (solo si falta) ---
   if [ -d "$REPO_SIS/.git" ]; then
-    info "ya existe una copia del proyecto en $REPO_SIS; se conserva."
+    info "copia del proyecto en $REPO_SIS: presente."
   elif [ "$PROYECTO_DIR" = "$REPO_SIS" ]; then
     info "el proyecto ya esta en $REPO_SIS."
   elif [ -d "$PROYECTO_DIR/.git" ]; then
@@ -365,36 +367,60 @@ else
     ok "copia del proyecto lista en $REPO_SIS."
   elif command -v git >/dev/null 2>&1; then
     info "clonando el proyecto desde $REMOTO_DEFECTO a $REPO_SIS..."
-    if git clone --quiet "$REMOTO_DEFECTO" "$REPO_SIS" 2>/dev/null; then
-      ok "proyecto clonado en $REPO_SIS."
-    else
-      warn "no se pudo clonar el repo (sin internet?); la autoactualizacion quedara deshabilitada."
-    fi
+    git clone --quiet "$REMOTO_DEFECTO" "$REPO_SIS" 2>/dev/null \
+      && ok "proyecto clonado en $REPO_SIS." \
+      || warn "no se pudo clonar el repo (sin internet?); la autoactualizacion quedara deshabilitada."
   else
     warn "git no disponible; no se pudo preparar la autoactualizacion."
   fi
-  # marcar el repo como seguro para git corriendo como root
   git config --global --add safe.directory "$REPO_SIS" 2>/dev/null || true
-  # instalar el comando hercule-update (wrapper que usa siempre la version actual)
-  if [ -f "$REPO_SIS/instalador-debian13/actualizar-hercule.sh" ]; then
+
+  INST_SIS="$REPO_SIS/instalador-debian13"
+  # --- comando hercule-update (wrapper que usa siempre la version actual) ---
+  if [ -f "$INST_SIS/actualizar-hercule.sh" ]; then
     cat > /usr/local/bin/hercule-update <<EOF
 #!/usr/bin/env bash
 # Actualiza Hercule desde el repositorio y re-aplica los cambios.
-exec bash "$REPO_SIS/instalador-debian13/actualizar-hercule.sh" "\$@"
+exec bash "$INST_SIS/actualizar-hercule.sh" "\$@"
 EOF
     chmod 0755 /usr/local/bin/hercule-update
-    # registrar la version instalada
     COMMIT_INI="$(git -C "$REPO_SIS" rev-parse HEAD 2>/dev/null || echo desconocido)"
     printf "commit=%s\nfecha=%s\n" "$COMMIT_INI" "$(date '+%Y-%m-%d %H:%M:%S')" \
       > "$REPO_SIS/.hercule-version" 2>/dev/null || true
     ok "comando 'hercule-update' instalado."
-    info "para actualizar Hercule en el futuro:  sudo hercule-update"
-    info "para solo ver si hay novedades:        sudo hercule-update --check"
   else
     warn "no se encontro el actualizador en $REPO_SIS; 'hercule-update' no se instalo."
   fi
+
+  # --- enganche automatico con APT: al hacer 'apt update' se revisa el repo
+  #     y, si hay cambios, se lanza hercule-update desacoplado del lock de apt ---
+  if [ -f "$INST_SIS/hercule-autoupdate.sh" ]; then
+    install -m 0755 "$INST_SIS/hercule-autoupdate.sh" /usr/local/bin/hercule-autoupdate
+    mkdir -p /etc/hercule
+    # no se pisa si ya existe: respeta la eleccion previa del usuario
+    if [ ! -f /etc/hercule/autoupdate.conf ]; then
+      cat > /etc/hercule/autoupdate.conf <<'EOF'
+# Hercule - autoactualizacion al actualizar el SO (apt update)
+# AUTO_APPLY=1  aplica los cambios de Hercule automaticamente (por defecto)
+# AUTO_APPLY=0  solo avisa; aplicas con 'sudo hercule-update'
+AUTO_APPLY=1
+EOF
+    fi
+    # hook de apt: corre tras 'apt update' exitoso; ademas fija un timeout de
+    # lock para que la actualizacion en segundo plano espere en vez de fallar.
+    cat > /etc/apt/apt.conf.d/99hercule-update <<'EOF'
+// Hercule - autoactualizacion del proyecto al actualizar el sistema
+APT::Update::Post-Invoke-Success { "/usr/local/bin/hercule-autoupdate apt-hook 2>/dev/null || true"; };
+DPkg::Lock::Timeout "300";
+EOF
+    ok "autoactualizacion con apt activada (se revisa al hacer 'apt update')."
+    info "para desactivar solo el auto-aplicar: /etc/hercule/autoupdate.conf (AUTO_APPLY=0)."
+  else
+    warn "no se encontro hercule-autoupdate.sh; el enganche con apt no se instalo."
+  fi
+
+  info "actualizacion manual:  sudo hercule-update   |   solo chequear:  sudo hercule-update --check"
 fi
-fi  # fin sistema de actualizacion
 
 # ---------------------------------------------------------------------
 # 4. (al final) Preguntar si eliminar los otros usuarios

@@ -60,6 +60,8 @@ Todo caso sigue el mismo camino. Está explicado en
 - `sudo hercule-update` — actualiza Hercule con los últimos cambios del proyecto
   (`--check` solo avisa si hay novedades; `--tools` también actualiza el toolkit).
   Re-aplica tema, guías y apps **sin tocar tus casos**.
+  *También corre solo:* al hacer `sudo apt update`, si hay cambios en Hercule se
+  aplican en segundo plano. Se configura en `/etc/hercule/autoupdate.conf`.
 
 ---
 
